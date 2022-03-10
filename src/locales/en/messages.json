@@ -1828,5 +1828,11 @@
         "example": "name@example.com"
       }
     }
+  },
+  "allVaults": {
+    "message": "All Vaults"
+  },
+  "myVault": {
+    "message": "My Vault"
   }
 }

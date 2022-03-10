@@ -24,6 +24,7 @@ import { TotpService } from "jslib-common/abstractions/totp.service";
 import { CipherRepromptType } from "jslib-common/enums/cipherRepromptType";
 import { CipherType } from "jslib-common/enums/cipherType";
 import { EventType } from "jslib-common/enums/eventType";
+import { Organization } from "jslib-common/models/domain/organization";
 import { CipherView } from "jslib-common/models/view/cipherView";
 import { FolderView } from "jslib-common/models/view/folderView";
 import { invokeMenu, RendererMenuItem } from "jslib-electron/utils";
@@ -70,6 +71,8 @@ export class VaultComponent implements OnInit, OnDestroy {
   type: CipherType = null;
   folderId: string = null;
   collectionId: string = null;
+  organizationId: string = null;
+  myVaultOnly = false;
   addType: CipherType = null;
   addOrganizationId: string = null;
   addCollectionIds: string[] = null;
@@ -547,56 +550,114 @@ export class VaultComponent implements OnInit, OnDestroy {
     this.go();
   }
 
-  async clearGroupingFilters() {
+  async filterAllItems() {
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchVault"));
-    await this.ciphersComponent.reload();
     this.clearFilters();
+    await this.ciphersComponent.reload(this.buildFilter());
     this.go();
   }
 
   async filterFavorites() {
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchFavorites"));
-    await this.ciphersComponent.reload((c) => c.favorite);
     this.clearFilters();
     this.favorites = true;
+    await this.ciphersComponent.reload(this.buildFilter());
     this.go();
   }
 
   async filterDeleted() {
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchTrash"));
     this.ciphersComponent.deleted = true;
-    await this.ciphersComponent.reload(null, true);
     this.clearFilters();
     this.deleted = true;
+    await this.ciphersComponent.reload(this.buildFilter(), true);
     this.go();
   }
 
   async filterCipherType(type: CipherType) {
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchType"));
-    await this.ciphersComponent.reload((c) => c.type === type);
     this.clearFilters();
     this.type = type;
+    await this.ciphersComponent.reload(this.buildFilter());
     this.go();
   }
 
   async filterFolder(folderId: string) {
     folderId = folderId === "none" ? null : folderId;
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchFolder"));
-    await this.ciphersComponent.reload((c) => c.folderId === folderId);
-    this.clearFilters();
     this.folderId = folderId == null ? "none" : folderId;
+    await this.ciphersComponent.reload(this.buildFilter());
     this.go();
   }
 
   async filterCollection(collectionId: string) {
     this.searchBarService.setPlaceholderText(this.i18nService.t("searchCollection"));
-    await this.ciphersComponent.reload(
-      (c) => c.collectionIds != null && c.collectionIds.indexOf(collectionId) > -1
-    );
-    this.clearFilters();
     this.collectionId = collectionId;
+    await this.ciphersComponent.reload(this.buildFilter());
     this.updateCollectionProperties();
     this.go();
+  }
+
+  async filterOrganization(organization: Organization) {
+    this.searchBarService.setPlaceholderText(
+      this.i18nService.t("searchOrganization", organization.name)
+    );
+    this.organizationId = organization.id;
+    this.myVaultOnly = false;
+    await this.ciphersComponent.reload(this.buildFilter());
+    this.go();
+  }
+
+  async filterMyVault() {
+    this.searchBarService.setPlaceholderText(this.i18nService.t("searchMyVault"));
+    this.organizationId = null;
+    this.myVaultOnly = true;
+    await this.ciphersComponent.reload(this.buildFilter());
+    this.go();
+  }
+
+  async filterAllVaults() {
+    this.searchBarService.setPlaceholderText(this.i18nService.t("searchVault"));
+    this.organizationId = null;
+    this.myVaultOnly = false;
+    await this.ciphersComponent.reload(this.buildFilter());
+    this.go();
+  }
+
+  private buildFilter(): (cipher: CipherView) => boolean {
+    return (cipher) => {
+      let cipherPassesFilter = true;
+      if (this.favorites && cipherPassesFilter) {
+        console.log("checking favorites");
+        cipherPassesFilter = cipher.favorite;
+      }
+      if (this.deleted && cipherPassesFilter) {
+        console.log("checking deleted");
+        cipherPassesFilter = cipher.isDeleted;
+      }
+      if (this.type != null && cipherPassesFilter) {
+        console.log("checking type", this.type);
+        cipherPassesFilter = cipher.type === this.type;
+      }
+      if (this.folderId != null && this.folderId != "none" && cipherPassesFilter) {
+        console.log("checking folder", this.folderId);
+        cipherPassesFilter = cipher.folderId === this.folderId;
+      }
+      if (this.collectionId != null && cipherPassesFilter) {
+        console.log("checking collection", this.collectionId);
+        cipherPassesFilter =
+          cipher.collectionIds != null && cipher.collectionIds.indexOf(this.collectionId) > -1;
+      }
+      if (this.organizationId != null && cipherPassesFilter) {
+        console.log("checking organization", this.organizationId);
+        cipherPassesFilter = cipher.organizationId === this.organizationId;
+      }
+      if (this.myVaultOnly && cipherPassesFilter) {
+        console.log("checking myVault", this.myVaultOnly);
+        cipherPassesFilter = cipher.organizationId === null;
+      }
+      return cipherPassesFilter;
+    };
   }
 
   async openPasswordGenerator(showSelect: boolean) {
@@ -678,8 +739,6 @@ export class VaultComponent implements OnInit, OnDestroy {
   }
 
   private clearFilters() {
-    this.folderId = null;
-    this.collectionId = null;
     this.favorites = false;
     this.type = null;
     this.addCollectionIds = null;
@@ -698,6 +757,8 @@ export class VaultComponent implements OnInit, OnDestroy {
         folderId: this.folderId,
         collectionId: this.collectionId,
         deleted: this.deleted ? true : null,
+        organizationId: this.organizationId,
+        myVaultOnly: this.myVaultOnly,
       };
     }
 

@@ -1,5 +1,44 @@
-<div class="content">
+<div class="container loading-spinner" *ngIf="!loaded">
+  <i class="bwi bwi-spinner bwi-spin bwi-3x" aria-hidden="true"></i>
+</div>
+<div class="content" *ngIf="loaded">
   <div class="inner-content">
+    <ng-container *ngIf="showOrganizations">
+      <div class="heading" [ngClass]="{ active: !myVaultOnly && !selectedOrganizationId }">
+        <i
+          class="bwi bwi-fw"
+          title="{{ 'toggleCollapse' | i18n }}"
+          aria-hidden="true"
+          [ngClass]="{
+            'bwi-angle-right': isCollapsed(vaultsGrouping),
+            'bwi-angle-down': !isCollapsed(vaultsGrouping)
+          }"
+          (click)="collapse(vaultsGrouping)"
+          appStopProp
+        ></i>
+        <a href="#" (click)="selectAllVaults()">
+          <h2>&nbsp;{{ vaultsGrouping.name | i18n }}</h2>
+        </a>
+      </div>
+      <ul *ngIf="!isCollapsed(vaultsGrouping)">
+        <li [ngClass]="{ active: myVaultOnly }">
+          <a href="#" (click)="selectMyVault()">
+            <i class="bwi bwi-fw bwi-user" aria-hidden="true"></i>
+            &nbsp;{{ "myVault" | i18n }}
+          </a>
+        </li>
+        <li
+          *ngFor="let organization of organizations"
+          [ngClass]="{ active: organization.id === selectedOrganizationId }"
+        >
+          <a href="#" appStopClick appBlurClick (click)="selectOrganization(organization)">
+            <i class="bwi bwi-fw bwi-briefcase" aria-hidden="true"></i>
+            &nbsp;{{ organization.name }}
+          </a>
+        </li>
+      </ul>
+      <hr />
+    </ng-container>
     <h2 class="sr-only">{{ "filters" | i18n }}</h2>
     <ul>
       <li [ngClass]="{ active: selectedAll }">
@@ -18,8 +57,21 @@
         </a>
       </li>
     </ul>
-    <h2>{{ "types" | i18n }}</h2>
-    <ul>
+    <div class="heading">
+      <i
+        class="bwi bwi-fw"
+        title="{{ 'toggleCollapse' | i18n }}"
+        aria-hidden="true"
+        [ngClass]="{
+          'bwi-angle-right': isCollapsed(typesGrouping),
+          'bwi-angle-down': !isCollapsed(typesGrouping)
+        }"
+        (click)="collapse(typesGrouping)"
+        appStopProp
+      ></i>
+      <h2>&nbsp;{{ typesGrouping.name | i18n }}</h2>
+    </div>
+    <ul *ngIf="!isCollapsed(typesGrouping)">
       <li [ngClass]="{ active: selectedType === cipherType.Login }">
         <a href="#" appStopClick appBlurClick (click)="selectType(cipherType.Login)">
           <i class="bwi bwi-fw bwi-globe" aria-hidden="true"></i>&nbsp;{{ "typeLogin" | i18n }}
@@ -43,15 +95,25 @@
         </a>
       </li>
     </ul>
-    <p *ngIf="!loaded" class="text-muted">{{ "loading" | i18n }}</p>
-    <ng-container *ngIf="loaded">
+    <ng-container>
       <div class="heading">
-        <h2>{{ "folders" | i18n }}</h2>
+        <i
+          class="bwi bwi-fw"
+          title="{{ 'toggleCollapse' | i18n }}"
+          aria-hidden="true"
+          [ngClass]="{
+            'bwi-angle-right': isCollapsed(foldersGrouping),
+            'bwi-angle-down': !isCollapsed(foldersGrouping)
+          }"
+          (click)="collapse(foldersGrouping)"
+          appStopProp
+        ></i>
+        <h2>&nbsp;{{ foldersGrouping.name | i18n }}</h2>
         <button appBlurClick (click)="addFolder()" appA11yTitle="{{ 'addFolder' | i18n }}">
           <i class="bwi bwi-plus bwi-fw" aria-hidden="true"></i>
         </button>
       </div>
-      <ul>
+      <ul *ngIf="!isCollapsed(foldersGrouping)">
         <ng-template #recursiveFolders let-folders>
           <li
             *ngFor="let f of folders"
@@ -99,9 +161,22 @@
           *ngTemplateOutlet="recursiveFolders; context: { $implicit: nestedFolders }"
         ></ng-container>
       </ul>
-      <div *ngIf="collections && collections.length">
-        <h2>{{ "collections" | i18n }}</h2>
-        <ul>
+      <div *ngIf="!myVaultOnly && collections && collections.length">
+        <div class="heading">
+          <i
+            class="bwi bwi-fw"
+            title="{{ 'toggleCollapse' | i18n }}"
+            aria-hidden="true"
+            [ngClass]="{
+              'bwi-angle-right': isCollapsed(collectionsGrouping),
+              'bwi-angle-down': !isCollapsed(collectionsGrouping)
+            }"
+            (click)="collapse(collectionsGrouping)"
+            appStopProp
+          ></i>
+          <h2>&nbsp;{{ collectionsGrouping.name | i18n }}</h2>
+        </div>
+        <ul *ngIf="!isCollapsed(collectionsGrouping)">
           <ng-template #recursiveCollections let-collections>
             <li
               *ngFor="let c of collections"

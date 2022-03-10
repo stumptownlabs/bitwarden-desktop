@@ -54,7 +54,7 @@
   <app-vault-groupings
     id="groupings"
     class="groupings"
-    (onAllClicked)="clearGroupingFilters()"
+    (onAllClicked)="filterAllItems()"
     (onFavoritesClicked)="filterFavorites()"
     (onCipherTypeClicked)="filterCipherType($event)"
     (onFolderClicked)="filterFolder($event.id)"
@@ -62,6 +62,9 @@
     (onEditFolder)="editFolder($event.id)"
     (onCollectionClicked)="filterCollection($event.id)"
     (onTrashClicked)="filterDeleted()"
+    (onOrganizationClicked)="filterOrganization($event)"
+    (onMyVaultClicked)="filterMyVault()"
+    (onAllVaultsClicked)="filterAllVaults()"
   >
   </app-vault-groupings>
 </div>
